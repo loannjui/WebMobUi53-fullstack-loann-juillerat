@@ -20,6 +20,8 @@ class ProfileController extends Controller
             ->with(['user', 'likes'])
             ->get();
 
+         //   $polls = Poll::where('user_id', $user->id) ->orderBy('created_at', 'desc')->with(['user', 'poll'])
+
         return view('profile', ['user' => $user, 'posts' => $posts]);
     }
 }

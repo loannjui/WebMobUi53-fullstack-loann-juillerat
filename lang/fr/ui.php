@@ -221,13 +221,23 @@ return [
             'title_without_post_title' => 'Modifier le post',
             'description' => 'Modifiez le post ":post_title" pour mettre à jour son contenu.',
             'description_without_post_title' => 'Modifiez le post pour mettre à jour son contenu.',
-        ],
+        ], 
         'show' => [
             'title' => '":post_title" par :first_name :last_name',
             'title_without_post_title' => 'Post par :first_name :last_name',
             'description' => '":post_title" par :first_name :last_name.',
             'description_without_post_title' => 'Post de :first_name :last_name.',
             'author' => 'Publié par :first_name :last_name',
+        ],
+    ],
+    'polls'=>[
+        'index'=>[
+            'title'=> 'Tous les sondages',
+            'description'=> 'Tous les sondages de :app_name.',
+        ],
+        'dashboard'=>[
+            'title'=> 'Dashboard sondage',
+            'description' => 'Dashboard des sondages.',
         ],
     ],
 ];
