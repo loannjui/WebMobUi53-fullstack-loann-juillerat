@@ -1,4 +1,6 @@
 <script setup>
+
+import {useFetchApi} from '../composables/useFetchApi';
   defineProps({
     polls: { type: Array, default: () => [] },
   });

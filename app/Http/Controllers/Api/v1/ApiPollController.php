@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Models\Poll;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class ApiPollController extends Controller
 {
@@ -32,5 +33,19 @@ class ApiPollController extends Controller
         }
 
         return $poll;
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        $poll = Poll::findOrFail($id);
+
+        Gate::authorize('delete', $poll);
+
+        $poll->delete();
+
+        return response()->noContent();
     }
 }
