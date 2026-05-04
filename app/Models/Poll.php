@@ -5,9 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Poll extends Model
 {
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($poll) {
+            $poll->secret_token = Str::random(32);
+        });
+    }
+
     /**
      * Get the user that owns the poll.
      */
