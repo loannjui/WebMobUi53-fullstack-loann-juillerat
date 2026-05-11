@@ -20,7 +20,7 @@ setPolls(props.polls);
 
 // Ton fetch existant pour le polling/refresh
 const { fetchApiToRef } = useFetchApi();
-const { data: getResult, error: getError, fetchNow } = fetchApiToRef({ url: "polls/" });
+const { data: getResult, error: getError, fetchNow } = fetchApiToRef({ url: "my-polls" });
 
 function handleError(err) {
     if (!err) return;
