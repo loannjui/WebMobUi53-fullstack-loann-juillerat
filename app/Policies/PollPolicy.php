@@ -37,7 +37,7 @@ class PollPolicy
      */
     public function update(User $user, Poll $poll): bool
     {
-        return false;
+       return $user->id === $poll->user_id;
     }
 
     /**

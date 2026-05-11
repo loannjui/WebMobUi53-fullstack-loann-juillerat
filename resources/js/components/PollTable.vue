@@ -1,11 +1,21 @@
 <script setup>
+import { ref } from "vue";
 import { usePollStore } from "@/stores/usePollStore";
+import EditPollModal from "./EditPollModal.vue";
 
 const { polls, deletePoll } = usePollStore();
+
+const showEditModal = ref(false);
+const selectedPoll = ref(null);
 
 async function delPoll(id) {
     console.log("delete Poll ID:", id);
     await deletePoll(id);
+}
+
+function openEdit(poll) {
+    selectedPoll.value = poll;
+    showEditModal.value = true;
 }
 </script>
 
@@ -25,8 +35,11 @@ async function delPoll(id) {
       </tr>
     </thead>
     <tbody>
-      <tr  v-for="poll in polls" :key="poll.id">
-        <td class="border px-3 py-2"><button  class="px-4 py-2 bg-red-600 dark:bg-red-900 text-white rounded-md hover:bg-red-700 dark:hover:bg-red-800" @click="delPoll(poll.id)">Supp.</button></td>
+      <tr v-for="poll in polls" :key="poll.id">
+        <td class="border px-3 py-2">
+          <button class="mb-2 px-4 py-2 bg-teal-600 dark:bg-teal-800 text-white rounded-md hover:bg-teal-700 dark:hover:bg-teal-700" @click="openEdit(poll)">Éditer</button>
+          <button class="px-4 py-2 bg-red-600 dark:bg-red-900 text-white rounded-md hover:bg-red-700 dark:hover:bg-red-800" @click="delPoll(poll.id)">Supp.</button>
+        </td>
         <td class="border px-3 py-2">{{ poll.id }}</td>
         <td class="border px-3 py-2">{{ poll.title || '-' }}</td>
         <td class="border px-3 py-2">{{ poll.question }}</td>
@@ -36,4 +49,6 @@ async function delPoll(id) {
       </tr>
     </tbody>
   </table>
+
+  <EditPollModal v-model="showEditModal" :poll="selectedPoll" />
 </template>

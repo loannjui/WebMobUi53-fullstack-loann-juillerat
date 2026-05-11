@@ -1,21 +1,39 @@
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useFetchApi } from "../composables/useFetchApi";
 import { usePollStore } from "@/stores/usePollStore";
 
-const props = defineProps({ modelValue: Boolean });
+const props = defineProps({
+    modelValue: Boolean,
+    poll: { type: Object, default: null },
+});
 const emit = defineEmits(["update:modelValue"]);
 
 const { fetchApi } = useFetchApi();
-const { addPoll } = usePollStore();
+const { updatePoll } = usePollStore();
 
 const title = ref("");
 const question = ref("");
-const is_draft = ref(false);           
+const is_draft = ref(false);
 const multiple_choice = ref(false);
-const allow_vote_change = ref(false);  
-const results_public = ref(false);     
+const allow_vote_change = ref(false);
+const results_public = ref(false);
 const duration = ref(0);
+
+watch(
+    () => props.poll,
+    (p) => {
+        if (!p) return;
+        title.value = p.title ?? "";
+        question.value = p.question ?? "";
+        is_draft.value = p.is_draft ?? false;
+        multiple_choice.value = p.allow_multiple_choices ?? false;
+        allow_vote_change.value = p.allow_vote_change ?? false;
+        results_public.value = p.results_public ?? false;
+        duration.value = p.duration ? Math.round(p.duration / 86400) : 0;
+    },
+    { immediate: true }
+);
 
 function close() {
     emit("update:modelValue", false);
@@ -24,7 +42,8 @@ function close() {
 async function submit() {
     try {
         const result = await fetchApi({
-            url: "polls/",
+            url: "polls/" + props.poll.id,
+            method: "PUT",
             data: {
                 title: title.value,
                 question: question.value,
@@ -35,7 +54,7 @@ async function submit() {
                 duration: duration.value,
             },
         });
-        addPoll(result);
+        updatePoll(result);
         close();
     } catch (err) {
         console.error(err);
@@ -46,7 +65,7 @@ async function submit() {
 <template>
     <Teleport to="body">
         <div
-            v-if="modelValue"
+            v-if="modelValue && poll"
             class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
             @click.self="close"
         >
@@ -59,7 +78,7 @@ async function submit() {
                     <h2
                         class="text-lg font-semibold text-slate-900 dark:text-white"
                     >
-                        Créer un sondage
+                        Modifier le sondage
                     </h2>
                 </div>
                 <div class="px-6 py-4">
@@ -120,10 +139,10 @@ async function submit() {
                     </button>
 
                     <button
-                        class="px-3 py-1 rounded-md bg-purple-800 hover:bg-purple-700 text-white transition"
+                        class="px-3 py-1 rounded-md bg-teal-600 hover:bg-teal-500 text-white transition"
                         @click="submit"
                     >
-                        Créer
+                        Enregistrer
                     </button>
                 </div>
             </div>

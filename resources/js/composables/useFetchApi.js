@@ -77,6 +77,11 @@ export function useFetchApi(baseUrl = null, additionalHeaders = {}) {
                 .then((response) => {
                     clearTimeout(timer);
 
+                    if (response.status === 204) {
+                        resolve(null);
+                        return;
+                    }
+
                     const responseClone = response.clone(); // Clone the response to use it twice if needed
 
                     return response

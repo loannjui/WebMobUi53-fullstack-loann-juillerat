@@ -63,6 +63,35 @@ class ApiPollController extends Controller
     }
 
 
+    public function update(Request $request, string $id)
+    {
+        $poll = Poll::findOrFail($id);
+
+        Gate::authorize('update', $poll);
+
+        $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
+            'question' => 'required|string',
+            'is_draft' => 'boolean',
+            'allow_multiple_choices' => 'boolean',
+            'allow_vote_change' => 'boolean',
+            'results_public' => 'boolean',
+            'duration' => 'nullable|integer|min:0|max:30',
+        ]);
+
+        $poll->title = $validated['title'] ?? null;
+        $poll->question = $validated['question'];
+        $poll->is_draft = $validated['is_draft'] ?? $poll->is_draft;
+        $poll->allow_multiple_choices = $validated['allow_multiple_choices'] ?? $poll->allow_multiple_choices;
+        $poll->allow_vote_change = $validated['allow_vote_change'] ?? $poll->allow_vote_change;
+        $poll->results_public = $validated['results_public'] ?? $poll->results_public;
+        $poll->duration = isset($validated['duration']) ? $validated['duration'] * 86400 : $poll->duration;
+
+        $poll->save();
+
+        return response()->json($poll);
+    }
+
     /**
      * Remove the specified resource from storage.
      */
