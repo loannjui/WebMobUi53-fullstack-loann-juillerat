@@ -19,7 +19,10 @@ const multiple_choice = ref(false);
 const allow_vote_change = ref(false);
 const results_public = ref(false);
 const duration = ref(0);
+// Liste des options de réponse du sondage en cours d'édition
+const options = ref(["", ""]);
 
+// Quand le sondage change (ou à l'ouverture), on remplit tous les champs avec ses données
 watch(
     () => props.poll,
     (p) => {
@@ -30,10 +33,25 @@ watch(
         multiple_choice.value = p.allow_multiple_choices ?? false;
         allow_vote_change.value = p.allow_vote_change ?? false;
         results_public.value = p.results_public ?? false;
+        // La durée est stockée en secondes en BDD, on la convertit en jours pour l'affichage
         duration.value = p.duration ? Math.round(p.duration / 86400) : 0;
+        // Si le sondage a déjà des options, on les charge ; sinon on repart de 2 champs vides
+        options.value = p.options?.length
+            ? p.options.map((o) => o.label)
+            : ["", ""];
     },
     { immediate: true }
 );
+
+// Ajoute un champ vide à la fin de la liste d'options
+function addOption() {
+    options.value.push("");
+}
+
+// Supprime l'option à l'index donné
+function removeOption(index) {
+    options.value.splice(index, 1);
+}
 
 function close() {
     emit("update:modelValue", false);
@@ -52,6 +70,8 @@ async function submit() {
                 allow_vote_change: allow_vote_change.value,
                 results_public: results_public.value,
                 duration: duration.value,
+                // On envoie uniquement les options non vides à l'API
+                options: options.value.filter((o) => o.trim() !== ""),
             },
         });
         updatePoll(result);
@@ -82,12 +102,14 @@ async function submit() {
                     </h2>
                 </div>
                 <div class="px-6 py-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="title">Titre du sondage</label>
                     <input
                         v-model="title"
                         type="text"
                         placeholder="Titre du sondage"
                         class="mb-4 w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600"
                     />
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="question">Votre question</label>
                     <input
                         v-model="question"
                         type="text"
@@ -95,38 +117,65 @@ async function submit() {
                         class="mb-4 w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600"
                     />
                     <div class="mb-4">
-                        <div class="text-slate-900 dark:text-white">
-                            <input v-model="is_draft" type="checkbox" />
-                            <label for="is_draft">Brouillon</label>
+                        <div class="flex items-center mb-2">
+                            <input v-model="is_draft" class="mr-2" type="checkbox" />
+                            <label class="text-sm text-gray-700 dark:text-gray-300" for="is_draft">Brouillon</label>
                         </div>
-                        <div class="text-slate-900 dark:text-white">
-                            <input v-model="multiple_choice" type="checkbox" />
-                            <label for="multiple_choice">Choix multiple</label>
+                        <div class="flex items-center mb-2">
+                            <input class ="mr-2" v-model="multiple_choice" type="checkbox" />
+                            <label class="text-sm text-gray-700 dark:text-gray-300" for="multiple_choice">Choix multiple</label>
                         </div>
-                        <div class="text-slate-900 dark:text-white">
-                            <input
+                        <div class="flex items-center mb-2">
+                            <input class="mr-2"
                                 v-model="allow_vote_change"
                                 type="checkbox"
                             />
-                            <label for="allow_vote_change"
+                            <label class="text-sm text-gray-700 dark:text-gray-300" for="allow_vote_change"
                                 >Changement de votes</label
                             >
                         </div>
-                        <div class="text-slate-900 dark:text-white">
-                            <input v-model="results_public" type="checkbox" />
-                            <label for="results_public"
+                        <div class="flex items-center mb-2">
+                            <input class="mr-2" v-model="results_public" type="checkbox" />
+                            <label class="text-sm text-gray-700 dark:text-gray-300" for="results_public"
                                 >Résultats publics</label
                             >
                         </div>
                     </div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="duration">Durée du sondage (en jour)</label>
                     <input
                         v-model="duration"
                         type="number"
                         placeholder="En jour"
                         min="0"
                         max="30"
-                        class="w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600"
+                        class="mb-4 w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600"
                     />
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Options de réponse</label>
+                        <div
+                            v-for="(option, index) in options"
+                            :key="index"
+                            class="flex gap-2 mb-2"
+                        >
+                            <input
+                                v-model="options[index]"
+                                type="text"
+                                :placeholder="`Option ${index + 1}`"
+                                class="flex-1 px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600"
+                            />
+                            <button
+                                v-if="options.length > 2"
+                                @click="removeOption(index)"
+                                type="button"
+                                class="px-2 py-1 rounded-md text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                            >✕</button>
+                        </div>
+                        <button
+                            @click="addOption"
+                            type="button"
+                            class="text-sm text-teal-600 hover:underline"
+                        >+ Ajouter une option</button>
+                    </div>
                 </div>
                 <div
                     class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2"
