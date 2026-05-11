@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\MyProfileController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\PollController;
 use App\Http\Controllers\PollDashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TokenController;
@@ -23,6 +24,7 @@ Route::get('/about', function () {
 Route::get('/@{username}', [ProfileController::class, 'show'])->where('username', '[A-Za-z0-9-_]+');
 
 Route::resource('posts', PostController::class)->only(['index', 'show']);
+Route::get('/polls', [PollController::class, 'index']);
 
 Route::controller(AuthController::class)->group(function () {
     Route::get('/auth/register', 'showRegister');

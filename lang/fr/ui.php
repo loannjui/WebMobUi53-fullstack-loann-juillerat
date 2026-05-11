@@ -232,11 +232,11 @@ return [
     ],
     'polls'=>[
         'index'=>[
-            'title'=> 'Tous les sondages',
+            'title'=> 'Voir tous les sondages',
             'description'=> 'Tous les sondages de :app_name.',
         ],
         'dashboard'=>[
-            'title'=> 'Dashboard sondage',
+            'title'=> 'Mes sondages',
             'description' => 'Dashboard des sondages.',
         ],
     ],
