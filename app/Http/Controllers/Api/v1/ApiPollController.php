@@ -20,6 +20,17 @@ class ApiPollController extends Controller
         return $polls;
     }
 
+    // Retourne tous les sondages publiés (non brouillons) pour la page publique
+    public function publicIndex()
+    {
+        $polls = Poll::where('is_draft', false)
+            ->with(['user', 'options'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return $polls;
+    }
+
     /**
      * Display the specified poll by its secret token.
      */
@@ -99,7 +110,7 @@ class ApiPollController extends Controller
 
         $poll->title = $validated['title'] ?? null;
         $poll->question = $validated['question'];
-        $poll->is_draft = $validated['is_draft'] ?? $poll->is_draft;
+        $poll->is_draft = array_key_exists('is_draft', $validated) ? $validated['is_draft'] : $poll->is_draft;
         $poll->allow_multiple_choices = $validated['allow_multiple_choices'] ?? $poll->allow_multiple_choices;
         $poll->allow_vote_change = $validated['allow_vote_change'] ?? $poll->allow_vote_change;
         $poll->results_public = $validated['results_public'] ?? $poll->results_public;

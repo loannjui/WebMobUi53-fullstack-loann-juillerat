@@ -14,7 +14,8 @@ const { updatePoll } = usePollStore();
 
 const title = ref("");
 const question = ref("");
-const is_draft = ref(false);
+// On travaille avec is_published (inverse de is_draft) pour que cocher = publier
+const is_published = ref(false);
 const multiple_choice = ref(false);
 const allow_vote_change = ref(false);
 const results_public = ref(false);
@@ -29,13 +30,13 @@ watch(
         if (!p) return;
         title.value = p.title ?? "";
         question.value = p.question ?? "";
-        is_draft.value = p.is_draft ?? false;
+        is_published.value = !(p.is_draft ?? true);
         multiple_choice.value = p.allow_multiple_choices ?? false;
         allow_vote_change.value = p.allow_vote_change ?? false;
         results_public.value = p.results_public ?? false;
         // La durée est stockée en secondes en BDD, on la convertit en jours pour l'affichage
         duration.value = p.duration ? Math.round(p.duration / 86400) : 0;
-        // Si le sondage a déjà des options, on les charge ; sinon on repart de 2 champs vides
+        // Si le sondage a déjà des options, on les charge, sinon on repart de 2 champs vides
         options.value = p.options?.length
             ? p.options.map((o) => o.label)
             : ["", ""];
@@ -68,7 +69,7 @@ async function submit() {
             data: {
                 title: title.value,
                 question: question.value,
-                is_draft: is_draft.value,
+                is_draft: !is_published.value,
                 allow_multiple_choices: multiple_choice.value,
                 allow_vote_change: allow_vote_change.value,
                 results_public: results_public.value,
@@ -121,8 +122,8 @@ async function submit() {
                     />
                     <div class="mb-4">
                         <div class="flex items-center mb-2">
-                            <input v-model="is_draft" class="mr-2" type="checkbox" />
-                            <label class="text-sm text-gray-700 dark:text-gray-300" for="is_draft">Publier</label>
+                            <input v-model="is_published" class="mr-2" type="checkbox" />
+                            <label class="text-sm text-gray-700 dark:text-gray-300">Publier</label>
                         </div>
                         <div class="flex items-center mb-2">
                             <input class ="mr-2" v-model="multiple_choice" type="checkbox" />

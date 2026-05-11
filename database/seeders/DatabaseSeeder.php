@@ -165,14 +165,14 @@ class DatabaseSeeder extends Seeder
                     ['poll_id' => 1, 'label' => 'La réponse D', 'created_at' => new \DateTime('2026-04-19 10:00:00'), 'updated_at' => new \DateTime('2026-04-19 10:00:00')],
                 ]);
 
-                                // Insert a test poll for John Doe
+                // Insert a published test poll for Jane Doe
                 DB::table('polls')->insert([
                     'id' => 2,
                     'user_id' => 2,
                     'title' => 'test',
                     'question' => 'Quelle est votre réponse ?',
                     'secret_token' => \Illuminate\Support\Str::random(32),
-                    'is_draft' => true,
+                    'is_draft' => false,
                     'allow_multiple_choices' => false,
                     'allow_vote_change' => false,
                     'results_public' => false,

@@ -11,7 +11,8 @@ const { addPoll } = usePollStore();
 
 const title = ref("");
 const question = ref("");
-const is_draft = ref(false);
+// On travaille avec is_published (inverse de is_draft) pour que cocher = publier
+const is_published = ref(false);
 const multiple_choice = ref(false);
 const allow_vote_change = ref(false);
 const results_public = ref(false);
@@ -40,7 +41,7 @@ async function submit() {
             data: {
                 title: title.value,
                 question: question.value,
-                is_draft: is_draft.value,
+                is_draft: !is_published.value,
                 allow_multiple_choices: multiple_choice.value,
                 allow_vote_change: allow_vote_change.value,
                 results_public: results_public.value,
@@ -93,8 +94,8 @@ async function submit() {
                     />
                     <div class="mb-4">
                         <div class="flex items-center mb-2">
-                            <input v-model="is_draft" class="mr-2" type="checkbox" />
-                            <label class="text-sm text-gray-700 dark:text-gray-300" for="is_draft">Brouillon</label>
+                            <input v-model="is_published" class="mr-2" type="checkbox" />
+                            <label class="text-sm text-gray-700 dark:text-gray-300">Publier</label>
                         </div>
                         <div class="flex items-center mb-2">
                             <input class ="mr-2" v-model="multiple_choice" type="checkbox" />
