@@ -58,6 +58,9 @@ function close() {
 }
 
 async function submit() {
+    // Sécurité : on ne soumet pas si le sondage est déjà publié
+    if (!props.poll?.is_draft) return;
+
     try {
         const result = await fetchApi({
             url: "polls/" + props.poll.id,
@@ -119,7 +122,7 @@ async function submit() {
                     <div class="mb-4">
                         <div class="flex items-center mb-2">
                             <input v-model="is_draft" class="mr-2" type="checkbox" />
-                            <label class="text-sm text-gray-700 dark:text-gray-300" for="is_draft">Brouillon</label>
+                            <label class="text-sm text-gray-700 dark:text-gray-300" for="is_draft">Publier</label>
                         </div>
                         <div class="flex items-center mb-2">
                             <input class ="mr-2" v-model="multiple_choice" type="checkbox" />

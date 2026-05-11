@@ -80,6 +80,11 @@ class ApiPollController extends Controller
 
         Gate::authorize('update', $poll);
 
+        // Un sondage publié ne peut plus être modifié
+        if (!$poll->is_draft) {
+            return response()->json(['message' => 'Un sondage publié ne peut pas être modifié.'], 403);
+        }
+
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
             'question' => 'required|string',
