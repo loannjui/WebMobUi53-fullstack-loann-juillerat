@@ -30,11 +30,11 @@
                         {{ config('app.name') }}
                     </a>
                     <a href="{{ url('/polls/dashboard-integrated') }}"
-                        class="block bg-teal-700 dark:bg-purple-900 px-3 py-1 rounded-md hover:bg-teal-800 dark:hover:bg-purple-800">
+                        class="block bg-teal-700 dark:bg-pink-900 px-3 py-1 rounded-md hover:bg-pink-800 dark:hover:bg-purple-800">
                         {{ __('ui.polls.dashboard.title') }}
                     </a>
                     <a href="{{ url('/polls') }}"
-                        class="block bg-teal-700 dark:bg-purple-900 px-3 py-1 rounded-md hover:bg-teal-800 dark:hover:bg-purple-800">
+                        class="block bg-teal-700 dark:bg-fuchsia-900 px-3 py-1 rounded-md hover:bg-fuchsia-800 dark:hover:bg-purple-800">
                         {{ __('ui.polls.index.title') }}
                     </a>
                     <a href="{{ url('/posts') }}"

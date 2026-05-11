@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Poll;
+use App\Models\PollVote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
@@ -20,11 +21,11 @@ class ApiPollController extends Controller
         return $polls;
     }
 
-    // Retourne tous les sondages publiés (non brouillons) pour la page publique
+    // Retourne tous les sondages publiés avec le nombre de votes par option
     public function publicIndex()
     {
         $polls = Poll::where('is_draft', false)
-            ->with(['user', 'options'])
+            ->with(['user', 'options' => fn($q) => $q->withCount('votes')])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -36,7 +37,7 @@ class ApiPollController extends Controller
      */
     public function show(string $token)
     {
-        $poll = Poll::with(['options' => function ($query) {
+        $poll = Poll::with(['user', 'options' => function ($query) {
             $query->withCount('votes');
         }])->where('secret_token', $token)->first();
 
@@ -130,6 +131,53 @@ class ApiPollController extends Controller
 
         // On retourne le sondage mis à jour avec ses options
         return response()->json($poll->load('options'));
+    }
+
+    public function vote(Request $request, string $id)
+    {
+        $poll = Poll::findOrFail($id);
+
+        if ($poll->is_draft) {
+            return response()->json(['message' => 'Ce sondage n\'est pas disponible.'], 403);
+        }
+
+        $validated = $request->validate([
+            'option_ids' => 'required|array|min:1',
+            'option_ids.*' => 'integer|exists:poll_options,id',
+        ]);
+
+        if (!$poll->allow_multiple_choices && count($validated['option_ids']) > 1) {
+            return response()->json(['message' => 'Ce sondage n\'autorise qu\'un seul choix.'], 422);
+        }
+
+        // Vérifie que toutes les options appartiennent bien à ce sondage
+        $validOptionIds = $poll->options()->pluck('id')->toArray();
+        foreach ($validated['option_ids'] as $optionId) {
+            if (!in_array($optionId, $validOptionIds)) {
+                return response()->json(['message' => 'Option invalide.'], 422);
+            }
+        }
+
+        $user = $request->user();
+        $hasVoted = $poll->votes()->where('user_id', $user->id)->exists();
+
+        if ($hasVoted && !$poll->allow_vote_change) {
+            return response()->json(['message' => 'Vous avez déjà voté pour ce sondage.'], 403);
+        }
+
+        if ($hasVoted) {
+            $poll->votes()->where('user_id', $user->id)->delete();
+        }
+
+        foreach ($validated['option_ids'] as $optionId) {
+            PollVote::create([
+                'poll_id' => $poll->id,
+                'user_id' => $user->id,
+                'poll_option_id' => $optionId,
+            ]);
+        }
+
+        return response()->json(['message' => 'Vote enregistré.', 'option_ids' => $validated['option_ids']]);
     }
 
     /**
