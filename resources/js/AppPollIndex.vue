@@ -11,9 +11,7 @@ const error = ref(null);
 
 onMounted(async () => {
     try {
-        // Récupère tous les sondages publiés depuis l'API publique
-        const result = await fetchApi({ url: "polls" });
-        polls.value = result;
+        polls.value = await fetchApi({ url: "polls" });
     } catch (err) {
         error.value = "Impossible de charger les sondages.";
         console.error(err);

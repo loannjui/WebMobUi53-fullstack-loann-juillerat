@@ -25,6 +25,10 @@ Route::get('/@{username}', [ProfileController::class, 'show'])->where('username'
 
 Route::resource('posts', PostController::class)->only(['index', 'show']);
 Route::get('/polls', [PollController::class, 'index']);
+Route::get('/polls/dashboard-integrated', fn() => view('polls.dashboard-integrated'))
+    ->middleware('auth')
+    ->name('polls.dashboard-integrated');
+Route::get('/polls/{token}', [PollController::class, 'show']);
 
 Route::controller(AuthController::class)->group(function () {
     Route::get('/auth/register', 'showRegister');
@@ -34,8 +38,6 @@ Route::controller(AuthController::class)->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/polls/dashboard-integrated', fn() => view('polls.dashboard-integrated'))
-        ->name('polls.dashboard-integrated');
     Route::resource('posts', PostController::class)->except(['index', 'show']);
     Route::singleton('my-profile', MyProfileController::class)->destroyable();
     Route::match(['put', 'patch'], '/likes/{post}', [LikeController::class, 'update']);
