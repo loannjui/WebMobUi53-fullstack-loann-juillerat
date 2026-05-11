@@ -14,7 +14,8 @@ class ApiPollController extends Controller
      */
     public function index(Request $request)
     {
-        $polls = $request->user()->polls()->orderBy('created_at', 'desc')->get();
+        // On charge les options de chaque sondage pour les afficher directement côté frontend
+        $polls = $request->user()->polls()->with('options')->orderBy('created_at', 'desc')->get();
 
         return $polls;
     }
@@ -45,6 +46,8 @@ class ApiPollController extends Controller
             'allow_vote_change' => 'boolean',
             'results_public' => 'boolean',
             'duration' => 'nullable|integer|min:0|max:30',
+            'options' => 'array',
+            'options.*' => 'string|max:255',
         ]);
 
         $poll = new Poll();
@@ -59,7 +62,15 @@ class ApiPollController extends Controller
 
         $poll->save();
 
-        return response()->json($poll, 201);
+        // Si des options ont été envoyées, on les insère dans poll_options liées à ce sondage
+        if (!empty($validated['options'])) {
+            $poll->options()->createMany(
+                array_map(fn($label) => ['label' => $label], $validated['options'])
+            );
+        }
+
+        // On retourne le sondage avec ses options pour que le frontend puisse les afficher directement
+        return response()->json($poll->load('options'), 201);
     }
 
 
@@ -77,6 +88,8 @@ class ApiPollController extends Controller
             'allow_vote_change' => 'boolean',
             'results_public' => 'boolean',
             'duration' => 'nullable|integer|min:0|max:30',
+            'options' => 'array',
+            'options.*' => 'string|max:255',
         ]);
 
         $poll->title = $validated['title'] ?? null;
@@ -89,7 +102,18 @@ class ApiPollController extends Controller
 
         $poll->save();
 
-        return response()->json($poll);
+        // Si le champ options est présent dans la requête, on remplace toutes les options existantes
+        if (array_key_exists('options', $validated)) {
+            $poll->options()->delete(); // Supprime les anciennes options
+            if (!empty($validated['options'])) {
+                $poll->options()->createMany(
+                    array_map(fn($label) => ['label' => $label], $validated['options'])
+                );
+            }
+        }
+
+        // On retourne le sondage mis à jour avec ses options
+        return response()->json($poll->load('options'));
     }
 
     /**
