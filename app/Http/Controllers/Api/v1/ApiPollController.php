@@ -40,15 +40,20 @@ class ApiPollController extends Controller
      */
     public function show(string $token, Request $request)
     {
-        $poll = Poll::with(['user', 'options' => function ($query) {
-            $query->withCount('votes');
-        }])->where('secret_token', $token)->first();
+        $user = $request->user('sanctum');
+
+        $poll = Poll::with('user')->where('secret_token', $token)->first();
 
         if (!$poll) {
             return response()->json(['message' => 'Poll not found.'], 404);
         }
 
-        $user = $request->user('sanctum');
+        if ($user || $poll->results_public) {
+            $poll->load(['options' => fn($q) => $q->withCount('votes')]);
+        } else {
+            $poll->load('options');
+        }
+
         $poll->user_option_ids = $user
             ? $poll->votes()->where('user_id', $user->id)->pluck('poll_option_id')->toArray()
             : [];

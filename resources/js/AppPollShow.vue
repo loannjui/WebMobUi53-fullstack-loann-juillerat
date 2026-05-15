@@ -27,6 +27,10 @@ const isExpired = computed(() =>
     poll.value?.ends_at && new Date(poll.value.ends_at) < new Date()
 );
 
+const canSeeResults = computed(() =>
+    currentUser.value || poll.value?.results_public
+);
+
 const canVote = computed(() =>
     currentUser.value && !isExpired.value && (!voted.value || poll.value?.allow_vote_change)
 );
@@ -172,11 +176,11 @@ usePolling(refreshPoll);
                             </span>
                             {{ option.label }}
                         </div>
-                        <span class="text-xs text-slate-500 dark:text-slate-400">
+                        <span v-if="canSeeResults" class="text-xs text-slate-500 dark:text-slate-400">
                             {{ option.votes_count ?? 0 }} vote{{ (option.votes_count ?? 0) !== 1 ? 's' : '' }} ({{ pct(option) }}%)
                         </span>
                     </div>
-                    <div class="h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                    <div v-if="canSeeResults" class="h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
                         <div
                             class="h-full rounded-full bg-teal-500 dark:bg-teal-600 transition-all"
                             :style="{ width: pct(option) + '%' }"
