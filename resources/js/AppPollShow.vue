@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useFetchApi } from "./composables/useFetchApi";
+import { usePolling } from "./composables/usePolling";
 
 const { fetchApi } = useFetchApi();
 const { fetchApi: fetchApiBase } = useFetchApi('/api');
@@ -59,13 +60,21 @@ async function submitVote() {
             data: { option_ids: selectedIds.value },
         });
         voted.value = true;
-        // Refresh poll to get updated vote counts
-        const refreshed = await fetchApi({ url: `polls/${token}` });
-        poll.value = refreshed;
+        await refreshPoll();
     } catch (err) {
         voteError.value = err?.data?.message ?? "Erreur lors du vote.";
     } finally {
         voting.value = false;
+    }
+}
+
+async function refreshPoll() {
+    try {
+        poll.value = await fetchApi({ url: `polls/${token}` });
+    } catch {
+        if (loading.value) error.value = "Sondage introuvable.";
+    } finally {
+        loading.value = false;
     }
 }
 
@@ -76,14 +85,10 @@ onMounted(async () => {
         // Not logged in
     }
 
-    try {
-        poll.value = await fetchApi({ url: `polls/${token}` });
-    } catch {
-        error.value = "Sondage introuvable.";
-    } finally {
-        loading.value = false;
-    }
+    await refreshPoll();
 });
+
+usePolling(refreshPoll);
 </script>
 
 <template>
