@@ -38,7 +38,7 @@ class ApiPollController extends Controller
     /**
      * Display the specified poll by its secret token.
      */
-    public function show(string $token)
+    public function show(string $token, Request $request)
     {
         $poll = Poll::with(['user', 'options' => function ($query) {
             $query->withCount('votes');
@@ -47,6 +47,11 @@ class ApiPollController extends Controller
         if (!$poll) {
             return response()->json(['message' => 'Poll not found.'], 404);
         }
+
+        $user = $request->user('sanctum');
+        $poll->user_option_ids = $user
+            ? $poll->votes()->where('user_id', $user->id)->pluck('poll_option_id')->toArray()
+            : [];
 
         return $poll;
     }

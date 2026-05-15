@@ -86,6 +86,11 @@ onMounted(async () => {
     }
 
     await refreshPoll();
+
+    if (poll.value?.user_option_ids?.length) {
+        selectedIds.value = poll.value.user_option_ids;
+        voted.value = true;
+    }
 });
 
 usePolling(refreshPoll);
@@ -148,7 +153,7 @@ usePolling(refreshPoll);
                     :class="[
                         'rounded-lg border p-4 transition',
                         canVote ? 'cursor-pointer' : 'cursor-default',
-                        canVote && selectedIds.includes(option.id)
+                        selectedIds.includes(option.id)
                             ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
                             : canVote
                                 ? 'border-slate-200 dark:border-slate-600 hover:border-teal-400 dark:hover:border-teal-500 bg-white dark:bg-slate-800'
@@ -161,6 +166,9 @@ usePolling(refreshPoll);
                                 {{ poll.allow_multiple_choices
                                     ? (selectedIds.includes(option.id) ? '☑' : '☐')
                                     : (selectedIds.includes(option.id) ? '◉' : '○') }}
+                            </span>
+                            <span v-else-if="voted && selectedIds.includes(option.id)">
+                                {{ poll.allow_multiple_choices ? '☑' : '◉' }}
                             </span>
                             {{ option.label }}
                         </div>
