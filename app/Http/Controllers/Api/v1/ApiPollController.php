@@ -22,14 +22,17 @@ class ApiPollController extends Controller
     }
 
     // Retourne tous les sondages publiés avec le nombre de votes par option
-    public function publicIndex()
+    public function publicIndex(Request $request)
     {
-        $polls = Poll::where('is_draft', false)
+        $query = Poll::where('is_draft', false)
             ->with(['user', 'options' => fn($q) => $q->withCount('votes')])
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('created_at', 'desc');
 
-        return $polls;
+        if (!$request->user('sanctum')) {
+            $query->where('results_public', true);
+        }
+
+        return $query->get();
     }
 
     /**
