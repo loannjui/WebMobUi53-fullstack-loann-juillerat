@@ -7,6 +7,7 @@ const { polls, deletePoll } = usePollStore();
 
 const showEditModal = ref(false);
 const selectedPoll = ref(null);
+const copiedPollId = ref(null);
 
 async function delPoll(id) {
     console.log("delete Poll ID:", id);
@@ -16,6 +17,13 @@ async function delPoll(id) {
 function openEdit(poll) {
     selectedPoll.value = poll;
     showEditModal.value = true;
+}
+
+async function copyShareLink(poll) {
+    const url = `${window.location.origin}/polls/${poll.secret_token}`;
+    await navigator.clipboard.writeText(url);
+    copiedPollId.value = poll.id;
+    setTimeout(() => { copiedPollId.value = null; }, 2000);
 }
 </script>
 
@@ -72,6 +80,14 @@ function openEdit(poll) {
                     <span v-if="poll.duration">Durée : {{ Math.round(poll.duration / 86400) }}j</span>
                 </div>
                 <div class="flex gap-2">
+                    <button
+                        v-if="!poll.is_draft"
+                        @click="copyShareLink(poll)"
+                        class="px-3 py-1.5 text-sm rounded-md transition"
+                        :class="copiedPollId === poll.id
+                            ? 'bg-green-600 dark:bg-green-700 text-white'
+                            : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'"
+                    >{{ copiedPollId === poll.id ? 'Lien copié !' : 'Copier le lien' }}</button>
                     <button
                         @click="openEdit(poll)"
                         :disabled="!poll.is_draft"

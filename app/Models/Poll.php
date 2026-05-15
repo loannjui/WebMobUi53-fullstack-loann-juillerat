@@ -9,6 +9,11 @@ use Illuminate\Support\Str;
 
 class Poll extends Model
 {
+    protected $casts = [
+        'started_at' => 'datetime',
+        'ends_at'    => 'datetime',
+    ];
+
     protected static function boot()
     {
         parent::boot();

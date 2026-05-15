@@ -22,8 +22,12 @@ const totalVotes = computed(() =>
     (poll.value?.options ?? []).reduce((sum, o) => sum + (o.votes_count ?? 0), 0)
 );
 
+const isExpired = computed(() =>
+    poll.value?.ends_at && new Date(poll.value.ends_at) < new Date()
+);
+
 const canVote = computed(() =>
-    currentUser.value && (!voted.value || poll.value?.allow_vote_change)
+    currentUser.value && !isExpired.value && (!voted.value || poll.value?.allow_vote_change)
 );
 
 function pct(option) {
@@ -111,8 +115,19 @@ onMounted(async () => {
                 {{ poll.question }}
             </p>
 
+            <!-- Sondage expiré -->
+            <div v-if="isExpired" class="mb-6 flex items-center gap-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-4 py-3 text-red-700 dark:text-red-400">
+                <span class="text-lg leading-none">⛔</span>
+                <div>
+                    <p class="font-medium">Ce sondage est terminé</p>
+                    <p class="text-sm">
+                        La période de vote s'est terminée le {{ new Date(poll.ends_at).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }}.
+                    </p>
+                </div>
+            </div>
+
             <!-- Confirmation de vote -->
-            <p v-if="voted && !poll.allow_vote_change" class="mb-4 text-sm font-medium text-teal-600 dark:text-teal-400">
+            <p v-if="voted && !poll.allow_vote_change && !isExpired" class="mb-4 text-sm font-medium text-teal-600 dark:text-teal-400">
                 Vote enregistré.
             </p>
             <p v-if="voted && poll.allow_vote_change" class="mb-2 text-sm text-slate-400 dark:text-slate-500">
@@ -158,7 +173,10 @@ onMounted(async () => {
             </ul>
 
             <!-- Actions -->
-            <div>
+            <p v-if="isExpired" class="text-sm text-slate-400 dark:text-slate-500 italic">
+                Les votes sont clôturés.
+            </p>
+            <div v-if="!isExpired">
                 <!-- Non connecté -->
                 <p v-if="!currentUser" class="text-sm text-slate-400 dark:text-slate-500 italic">
                     <a href="/auth/login" class="underline text-teal-600 hover:text-teal-500">Connectez-vous</a> pour voter.
