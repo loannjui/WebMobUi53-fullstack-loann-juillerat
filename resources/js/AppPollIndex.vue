@@ -1,24 +1,32 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, watch } from "vue";
 import { useFetchApi } from "./composables/useFetchApi";
+import { usePolling } from "./composables/usePolling";
 import PollPublicCard from "./components/PollPublicCard.vue";
 
-const { fetchApi } = useFetchApi();
+const { fetchApiToRef } = useFetchApi();
 
 const polls = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
-onMounted(async () => {
-    try {
-        polls.value = await fetchApi({ url: "polls" });
-    } catch (err) {
-        error.value = "Impossible de charger les sondages.";
-        console.error(err);
-    } finally {
+const { data, error: fetchError, fetchNow } = fetchApiToRef({ url: "polls" });
+
+watch(data, (val) => {
+    if (val) {
+        polls.value = val;
         loading.value = false;
     }
 });
+
+watch(fetchError, (err) => {
+    if (err) {
+        error.value = "Impossible de charger les sondages.";
+        loading.value = false;
+    }
+});
+
+usePolling(fetchNow);
 </script>
 
 <template>
