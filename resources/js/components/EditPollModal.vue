@@ -19,7 +19,8 @@ const is_published = ref(false);
 const multiple_choice = ref(false);
 const allow_vote_change = ref(false);
 const results_public = ref(false);
-const duration = ref(0);
+const duration = ref(1);
+const durationError = ref("");
 // Liste des options de réponse du sondage en cours d'édition
 const options = ref(["", ""]);
 
@@ -35,7 +36,7 @@ watch(
         allow_vote_change.value = p.allow_vote_change ?? false;
         results_public.value = p.results_public ?? false;
         // La durée est stockée en secondes en BDD, on la convertit en jours pour l'affichage
-        duration.value = p.duration ? Math.round(p.duration / 86400) : 0;
+        duration.value = p.duration ? Math.round(p.duration / 86400) : 1;
         // Si le sondage a déjà des options, on les charge, sinon on repart de 2 champs vides
         options.value = p.options?.length
             ? p.options.map((o) => o.label)
@@ -59,9 +60,13 @@ function close() {
 }
 
 async function submit() {
-    // Sécurité : on ne soumet pas si le sondage est déjà publié
     if (!props.poll?.is_draft) return;
 
+    durationError.value = "";
+    if (!duration.value || duration.value < 1) {
+        durationError.value = "La durée doit être d'au moins 1 jour.";
+        return;
+    }
     try {
         const result = await fetchApi({
             url: "polls/" + props.poll.id,
@@ -145,15 +150,17 @@ async function submit() {
                             >
                         </div>
                     </div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="duration">Durée du sondage (en jour)</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="duration">Durée du sondage (en jours) <span class="text-red-500">*</span></label>
                     <input
                         v-model="duration"
                         type="number"
-                        placeholder="En jour"
-                        min="0"
+                        placeholder="Ex: 7"
+                        min="1"
                         max="30"
-                        class="mb-4 w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600"
+                        class="w-full px-3 py-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-teal-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                        :class="durationError ? 'border-red-400 dark:border-red-600 mb-1' : 'border-slate-300 dark:border-slate-600 mb-4'"
                     />
+                    <p v-if="durationError" class="mb-4 text-xs text-red-500">{{ durationError }}</p>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Options de réponse</label>
                         <div

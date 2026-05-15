@@ -16,7 +16,8 @@ const is_published = ref(false);
 const multiple_choice = ref(false);
 const allow_vote_change = ref(false);
 const results_public = ref(false);
-const duration = ref(0);
+const duration = ref(1);
+const durationError = ref("");
 // Liste des options de réponse, initialisée avec 2 champs vides
 const options = ref(["", ""]);
 
@@ -35,6 +36,11 @@ function close() {
 }
 
 async function submit() {
+    durationError.value = "";
+    if (!duration.value || duration.value < 1) {
+        durationError.value = "La durée doit être d'au moins 1 jour.";
+        return;
+    }
     try {
         const result = await fetchApi({
             url: "polls/",
@@ -117,15 +123,17 @@ async function submit() {
                             >
                         </div>
                     </div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="duration">Durée du sondage (en jour)</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="duration">Durée du sondage (en jours) <span class="text-red-500">*</span></label>
                     <input
                         v-model="duration"
                         type="number"
-                        placeholder="En jour"
-                        min="0"
+                        placeholder="Ex: 7"
+                        min="1"
                         max="30"
-                        class="mb-4 w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600"
+                        class="w-full px-3 py-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-teal-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                        :class="durationError ? 'border-red-400 dark:border-red-600 mb-1' : 'border-slate-300 dark:border-slate-600 mb-4'"
                     />
+                    <p v-if="durationError" class="mb-4 text-xs text-red-500">{{ durationError }}</p>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Options de réponse</label>
                         <div

@@ -57,7 +57,7 @@ class ApiPollController extends Controller
             'allow_multiple_choices' => 'boolean',
             'allow_vote_change' => 'boolean',
             'results_public' => 'boolean',
-            'duration' => 'nullable|integer|min:0|max:30',
+            'duration' => 'required|integer|min:1|max:30',
             'options' => 'array',
             'options.*' => 'string|max:255',
         ]);
@@ -69,8 +69,14 @@ class ApiPollController extends Controller
         $poll->allow_multiple_choices = $validated['allow_multiple_choices'] ?? false;
         $poll->allow_vote_change = $validated['allow_vote_change'] ?? false;
         $poll->results_public = $validated['results_public'] ?? false;
-        $poll->duration = isset($validated['duration']) ? $validated['duration'] * 86400 : null;
+        $durationDays = $validated['duration'] ?? 0;
+        $poll->duration = $durationDays > 0 ? $durationDays * 86400 : null;
         $poll->user()->associate($request->user());
+
+        if (!$poll->is_draft && $poll->duration) {
+            $poll->started_at = now();
+            $poll->ends_at = now()->addSeconds($poll->duration);
+        }
 
         $poll->save();
 
@@ -104,10 +110,12 @@ class ApiPollController extends Controller
             'allow_multiple_choices' => 'boolean',
             'allow_vote_change' => 'boolean',
             'results_public' => 'boolean',
-            'duration' => 'nullable|integer|min:0|max:30',
+            'duration' => 'required|integer|min:1|max:30',
             'options' => 'array',
             'options.*' => 'string|max:255',
         ]);
+
+        $wasDraft = $poll->is_draft;
 
         $poll->title = $validated['title'] ?? null;
         $poll->question = $validated['question'];
@@ -115,7 +123,15 @@ class ApiPollController extends Controller
         $poll->allow_multiple_choices = $validated['allow_multiple_choices'] ?? $poll->allow_multiple_choices;
         $poll->allow_vote_change = $validated['allow_vote_change'] ?? $poll->allow_vote_change;
         $poll->results_public = $validated['results_public'] ?? $poll->results_public;
-        $poll->duration = isset($validated['duration']) ? $validated['duration'] * 86400 : $poll->duration;
+
+        if (array_key_exists('duration', $validated)) {
+            $poll->duration = ($validated['duration'] > 0) ? $validated['duration'] * 86400 : null;
+        }
+
+        if ($wasDraft && !$poll->is_draft && $poll->duration) {
+            $poll->started_at = now();
+            $poll->ends_at = now()->addSeconds($poll->duration);
+        }
 
         $poll->save();
 
@@ -139,6 +155,10 @@ class ApiPollController extends Controller
 
         if ($poll->is_draft) {
             return response()->json(['message' => 'Ce sondage n\'est pas disponible.'], 403);
+        }
+
+        if ($poll->ends_at && $poll->ends_at->isPast()) {
+            return response()->json(['message' => 'La période de vote est terminée.'], 403);
         }
 
         $validated = $request->validate([
