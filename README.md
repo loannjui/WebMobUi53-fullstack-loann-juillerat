@@ -83,7 +83,8 @@ Pour développer et tester le mini-projet en local, voici les étapes à suivre 
     composer run dev
     ```
 
-**Raccourci** : Les étapes 2, 3, 5 et 7 peuvent être effectuées en une seule commande :
+**Raccourci**
+Les étapes 2, 3, 5 et 7 peuvent être effectuées en une seule commande :
 
     ```bash
     composer setup
