@@ -1,16 +1,16 @@
-# HEIG-VD DévProdMéd Course - Mini-projet
+# HEIG-VD WebMobUI Course - Projet sondage fullstack
 
 Ce dépôt contient le mini-projet à réaliser dans le cadre du cours
-_"[Développement de produit média (DévProdMéd)](https://github.com/heig-vd-devprodmed-course/heig-vd-devprodmed-course)"_
+_"[WebMobUI](https://github.com/Chabloz/WebMobUi52/blob/main/ex/Fullstack_Project.md)"_
 enseigné à la
 [Haute Ecole d'Ingénierie et de Gestion du Canton de Vaud (HEIG-VD)](https://heig-vd.ch),
 Suisse.
 
 ## Objectif du mini-projet
 
-L'objectif de ce mini-projet est de créer un réseau social simple en utilisant le
-framework [Laravel](https://laravel.com/). Ce projet permettra de mettre en pratique les concepts
-appris dans le cours.
+L'objectif est de concevoir une interface permettant de créer, configurer, consulter et utiliser des sondages à travers une API JSON consommée par le frontend.
+
+Dans cette application, un sondage est un objet créé par une personne authentifiée, contenant une question, plusieurs options de réponse et un ensemble de paramètres définissant son comportement (brouillon ou lancé, choix simple ou multiple, visibilité des résultats et éventuelle durée de disponibilité).
 
 ## Pré-requis
 
@@ -18,13 +18,13 @@ Afin de lancer ce projet, une stack compatible avec Laravel, est requise.
 
 Voici les pré-requis nécessaires :
 
-- PHP >= 8.0.
+- PHP >= 8.2.
 - Composer.
 - Node.js et npm.
 - Une base de données (MySQL, PostgreSQL, SQLite, etc.).
 - Un serveur web (Apache, Nginx, etc.).
 
-[Laravel Herd](https://helm.sh/docs/charts/laravel/) est recommandé pour une installation facile de Laravel et de ses dépendances.
+[Laravel Herd](https://herd.laravel.com) est recommandé pour une installation facile de Laravel et de ses dépendances.
 
 ## Développement local
 
@@ -73,5 +73,11 @@ Pour développer et tester le mini-projet en local, voici les étapes à suivre 
     ```bash
     composer run dev
     ```
+
+**Raccourci** : Les étapes 2, 3, 5 et 7 peuvent être effectuées en une seule commande :
+
+```bash
+composer setup
+```
 
 L'application sera accessible à l'adresse <http://localhost:8000>.
