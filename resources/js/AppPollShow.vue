@@ -27,6 +27,10 @@ const isExpired = computed(() =>
     poll.value?.ends_at && new Date(poll.value.ends_at) < new Date()
 );
 
+const canSeeResults = computed(() =>
+    currentUser.value || poll.value?.results_public
+);
+
 const canVote = computed(() =>
     currentUser.value && !isExpired.value && (!voted.value || poll.value?.allow_vote_change)
 );
@@ -86,6 +90,11 @@ onMounted(async () => {
     }
 
     await refreshPoll();
+
+    if (poll.value?.user_option_ids?.length) {
+        selectedIds.value = poll.value.user_option_ids;
+        voted.value = true;
+    }
 });
 
 usePolling(refreshPoll);
@@ -148,7 +157,7 @@ usePolling(refreshPoll);
                     :class="[
                         'rounded-lg border p-4 transition',
                         canVote ? 'cursor-pointer' : 'cursor-default',
-                        canVote && selectedIds.includes(option.id)
+                        selectedIds.includes(option.id)
                             ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
                             : canVote
                                 ? 'border-slate-200 dark:border-slate-600 hover:border-teal-400 dark:hover:border-teal-500 bg-white dark:bg-slate-800'
@@ -162,13 +171,16 @@ usePolling(refreshPoll);
                                     ? (selectedIds.includes(option.id) ? '☑' : '☐')
                                     : (selectedIds.includes(option.id) ? '◉' : '○') }}
                             </span>
+                            <span v-else-if="voted && selectedIds.includes(option.id)">
+                                {{ poll.allow_multiple_choices ? '☑' : '◉' }}
+                            </span>
                             {{ option.label }}
                         </div>
-                        <span class="text-xs text-slate-500 dark:text-slate-400">
+                        <span v-if="canSeeResults" class="text-xs text-slate-500 dark:text-slate-400">
                             {{ option.votes_count ?? 0 }} vote{{ (option.votes_count ?? 0) !== 1 ? 's' : '' }} ({{ pct(option) }}%)
                         </span>
                     </div>
-                    <div class="h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                    <div v-if="canSeeResults" class="h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
                         <div
                             class="h-full rounded-full bg-teal-500 dark:bg-teal-600 transition-all"
                             :style="{ width: pct(option) + '%' }"
