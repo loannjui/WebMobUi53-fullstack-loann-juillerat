@@ -86,8 +86,8 @@ Pour développer et tester le mini-projet en local, voici les étapes à suivre 
 **Raccourci**
 Les étapes 2, 3, 5 et 7 peuvent être effectuées en une seule commande :
 
-    ```bash
+```bash
     composer setup
-    ```
+```
 
 L'application sera accessible à l'adresse <http://localhost:8000>.
