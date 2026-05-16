@@ -9,7 +9,6 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
-                'resources/js/poll-dashboard.js',
                 'resources/js/poll-dashboard-integrated.js',
                 'resources/js/poll-index.js',
                 'resources/js/poll-show.js',
