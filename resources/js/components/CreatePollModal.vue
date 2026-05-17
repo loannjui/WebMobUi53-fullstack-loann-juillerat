@@ -18,6 +18,7 @@ const allow_vote_change = ref(false);
 const results_public = ref(false);
 const duration = ref(1);
 const durationError = ref("");
+const optionsError = ref("");
 // Liste des options de réponse, initialisée avec 2 champs vides
 const options = ref(["", ""]);
 
@@ -37,8 +38,14 @@ function close() {
 
 async function submit() {
     durationError.value = "";
+    optionsError.value = "";
     if (!duration.value || duration.value < 1) {
         durationError.value = "La durée doit être d'au moins 1 jour.";
+        return;
+    }
+    const filledOptions = options.value.filter((o) => o.trim() !== "");
+    if (filledOptions.length < 2) {
+        optionsError.value = "Veuillez saisir au moins 2 options de réponse.";
         return;
     }
     try {
@@ -53,7 +60,7 @@ async function submit() {
                 results_public: results_public.value,
                 duration: duration.value,
                 // On envoie uniquement les options non vides à l'API
-                options: options.value.filter((o) => o.trim() !== ""),
+                options: filledOptions,
             },
         });
         addPoll(result);
@@ -91,7 +98,7 @@ async function submit() {
                         placeholder="Titre du sondage"
                         class="mb-4 w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600"
                     />
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="question">Votre question</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="question">Votre question <span class="text-red-500">*</span></label>
                     <input
                         v-model="question"
                         type="text"
@@ -135,7 +142,7 @@ async function submit() {
                     />
                     <p v-if="durationError" class="mb-4 text-xs text-red-500">{{ durationError }}</p>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Options de réponse</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Options de réponse <span class="text-red-500">*</span></label>
                         <div
                             v-for="(option, index) in options"
                             :key="index"
@@ -154,6 +161,7 @@ async function submit() {
                                 class="px-2 py-1 rounded-md text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
                             >✕</button>
                         </div>
+                        <p v-if="optionsError" class="mb-2 text-xs text-red-500">{{ optionsError }}</p>
                         <button
                             @click="addOption"
                             type="button"

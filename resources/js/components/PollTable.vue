@@ -1,5 +1,19 @@
 <script setup>
 import { ref } from "vue";
+
+function remaining(poll) {
+    if (!poll.ends_at) return null;
+    const diff = new Date(poll.ends_at) - Date.now();
+    if (diff <= 0) return null;
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const parts = [];
+    if (days > 0) parts.push(`${days}j`);
+    if (hours > 0) parts.push(`${hours}h`);
+    parts.push(`${minutes}min`);
+    return parts.join(' ');
+}
 import { usePollStore } from "@/stores/usePollStore";
 import EditPollModal from "./EditPollModal.vue";
 
@@ -72,14 +86,13 @@ async function copyShareLink(poll) {
                 Aucune option définie.
             </p>
 
-            <!-- Métadonnées et actions -->
-            <div class="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-700">
-                <div class="flex gap-2 flex-wrap text-xs text-slate-500 dark:text-slate-400">
-                    <span v-if="poll.allow_multiple_choices" class="px-2 py-0.5 rounded bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300">Choix multiple</span>
-                    <span v-if="poll.results_public" class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">Résultats publics</span>
-                    <span v-if="poll.duration">Durée : {{ Math.round(poll.duration / 86400) }}j</span>
-                </div>
-                <div class="flex gap-2">
+            <!-- Boutons d'action -->
+            <div class="mb-3 flex gap-2">
+                    <a
+                        v-if="!poll.is_draft"
+                        :href="`/polls/${poll.secret_token}`"
+                        class="px-3 py-1.5 text-sm rounded-md bg-teal-600 hover:bg-teal-500 text-white transition"
+                    >Voir le sondage</a>
                     <button
                         v-if="!poll.is_draft"
                         @click="copyShareLink(poll)"
@@ -101,7 +114,15 @@ async function copyShareLink(poll) {
                         @click="delPoll(poll.id)"
                         class="px-3 py-1.5 text-sm bg-red-600 dark:bg-red-900 text-white rounded-md hover:bg-red-700 dark:hover:bg-red-800 transition"
                     >Supprimer</button>
-                </div>
+            </div>
+
+            <!-- Métadonnées -->
+            <div class="flex gap-2 flex-wrap pt-3 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
+                <span v-if="poll.allow_multiple_choices" class="px-2 py-0.5 rounded bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300">Choix multiple</span>
+                <span v-if="poll.results_public" class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">Résultats publics</span>
+                <span v-if="poll.ends_at">
+                    {{ remaining(poll) ? remaining(poll) + ' restant' : 'Terminé' }}
+                </span>
             </div>
         </article>
     </div>

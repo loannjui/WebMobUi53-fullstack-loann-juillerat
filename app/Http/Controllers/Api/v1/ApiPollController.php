@@ -71,7 +71,7 @@ class ApiPollController extends Controller
             'allow_vote_change' => 'boolean',
             'results_public' => 'boolean',
             'duration' => 'required|integer|min:1|max:30',
-            'options' => 'array',
+            'options' => 'required|array|min:2',
             'options.*' => 'string|max:255',
         ]);
 
@@ -124,7 +124,7 @@ class ApiPollController extends Controller
             'allow_vote_change' => 'boolean',
             'results_public' => 'boolean',
             'duration' => 'required|integer|min:1|max:30',
-            'options' => 'array',
+            'options' => 'required|array|min:2',
             'options.*' => 'string|max:255',
         ]);
 
