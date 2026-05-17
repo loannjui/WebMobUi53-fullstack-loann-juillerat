@@ -13,6 +13,20 @@ function pct(option) {
     if (!totalVotes.value) return 0;
     return Math.round(((option.votes_count ?? 0) / totalVotes.value) * 100);
 }
+
+const remaining = computed(() => {
+    if (!props.poll.ends_at) return null;
+    const diff = new Date(props.poll.ends_at) - Date.now();
+    if (diff <= 0) return null;
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const parts = [];
+    if (days > 0) parts.push(`${days}j`);
+    if (hours > 0) parts.push(`${hours}h`);
+    parts.push(`${minutes}min`);
+    return parts.join(' ');
+});
 </script>
 
 <template>
@@ -72,7 +86,9 @@ function pct(option) {
             <span v-if="poll.allow_multiple_choices" class="px-2 py-0.5 rounded bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300">Choix multiple</span>
             <span v-if="poll.results_public" class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">Résultats publics</span>
             <span v-if="poll.allow_vote_change" class="px-2 py-0.5 rounded bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300">Vote modifiable</span>
-            <span v-if="poll.duration" class="text-slate-500 dark:text-slate-400">Durée : {{ Math.round(poll.duration / 86400) }}j</span>
+            <span v-if="poll.ends_at" class="text-slate-500 dark:text-slate-400">
+                {{ remaining ? remaining + ' restant' : 'Terminé' }}
+            </span>
         </div>
     </article>
 </template>
