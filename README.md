@@ -6,7 +6,7 @@ enseigné à la
 [Haute Ecole d'Ingénierie et de Gestion du Canton de Vaud (HEIG-VD)](https://heig-vd.ch),
 Suisse.
 
-## Objectif du mini-projet
+## Objectif du projet
 
 L'objectif est de concevoir une interface permettant de créer, configurer, consulter et utiliser des sondages à travers une API JSON consommée par le frontend.
 
@@ -20,6 +20,7 @@ Dans cette application, un sondage est un objet créé par une personne authenti
 - Un composable usePolling permet de mettre à jour les données périodiquement via un intervalle.
 - Au lieu d'une SPA globale, les vues Laravel des sondages monte une instance Vue indépendante sur un élément dédié. Cela permet de les intégrer dans les routes Laravel de base.
 - Pour la CSS, le projet continue à utiliser Tailwind pour garder une unité entre les nouvelles pages implémentées (les sondages) et les existantes (posts, pages profil, etc.).
+- Les utilisateurs non connectés ne peuvent voir que les sondages avec "results_public = true" et n'ont pas la possibilité de voter, mais les utilisateurs connectés peuvent voir tous les sondages publiés et voter.
 
 ## Pré-requis
 
