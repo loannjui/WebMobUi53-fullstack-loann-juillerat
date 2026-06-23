@@ -4,37 +4,47 @@ import { useFetchApi } from "./composables/useFetchApi";
 import { usePolling } from "./composables/usePolling";
 
 const { fetchApi } = useFetchApi();
-const { fetchApi: fetchApiBase } = useFetchApi('/api');
+const { fetchApi: fetchApiBase } = useFetchApi("/api");
 
-const token = document.getElementById('app-poll-show').dataset.token;
+// Récupère le token du sondage côté laravel
+const token = document.getElementById("app-poll-show").dataset.token;
 
 const poll = ref(null);
 const currentUser = ref(null);
 const loading = ref(true);
 const error = ref(null);
 
-// Voting state
-const selectedIds = ref([]);
-const voted = ref(false);
-const voting = ref(false);
+const selectedIds = ref([]); // Options cochées par le user
+const voted = ref(false); // Déjà vôté ?
+const voting = ref(false); // Envoi en cours ?
 const voteError = ref(null);
 
+// Somme de tous les votes
 const totalVotes = computed(() =>
-    (poll.value?.options ?? []).reduce((sum, o) => sum + (o.votes_count ?? 0), 0)
+    (poll.value?.options ?? []).reduce(
+        (sum, o) => sum + (o.votes_count ?? 0),
+        0,
+    ),
 );
 
-const isExpired = computed(() =>
-    poll.value?.ends_at && new Date(poll.value.ends_at) < new Date()
+const isExpired = computed(
+    () => poll.value?.ends_at && new Date(poll.value.ends_at) < new Date(),
 );
 
-const canSeeResults = computed(() =>
-    currentUser.value || poll.value?.results_public
+// Check si on est connecté ou si les résultats sont publics
+const canSeeResults = computed(
+    () => currentUser.value || poll.value?.results_public,
 );
 
-const canVote = computed(() =>
-    currentUser.value && !isExpired.value && (!voted.value || poll.value?.allow_vote_change)
+// Check si le user est connecté, si le sondage n'est pas terminé et si il n'a pas encore voté ou si on peut changer son vote.
+const canVote = computed(
+    () =>
+        currentUser.value &&
+        !isExpired.value &&
+        (!voted.value || poll.value?.allow_vote_change),
 );
 
+// Pareil dans PollPublicCard, on calcule le pourcentage d'une option.
 function pct(option) {
     if (!totalVotes.value) return 0;
     return Math.round(((option.votes_count ?? 0) / totalVotes.value) * 100);
@@ -44,31 +54,34 @@ function toggleOption(optionId) {
     if (!canVote.value) return;
 
     if (poll.value.allow_multiple_choices) {
+        // choix multiple : on ajoute ou on enlève
         const idx = selectedIds.value.indexOf(optionId);
-        if (idx === -1) selectedIds.value.push(optionId);
-        else selectedIds.value.splice(idx, 1);
+        if (idx === -1)
+            selectedIds.value.push(optionId); // S'il n'est pas dans la liste, on l'ajoute au tableau
+        else selectedIds.value.splice(idx, 1); // S'il est déjà dans la liste on l'enlève
     } else {
+        // Si c'est à choix unique, on remplace tout par une seule option.
         selectedIds.value = [optionId];
     }
 }
 
 async function submitVote() {
-    if (!selectedIds.value.length || voting.value) return;
+    if (!selectedIds.value.length || voting.value) return; // Si jamais le user n'a pas voté et a essayer de submit
 
-    voting.value = true;
-    voteError.value = null;
-
+    voting.value = true; // Envoie en cours
+    voteError.value = null; // On efface s'il y a eu une erreur avant
+    // On envoie les option(s) choisie(s)
     try {
         await fetchApi({
             url: `polls/${poll.value.id}/vote`,
             data: { option_ids: selectedIds.value },
         });
         voted.value = true;
-        await refreshPoll();
+        await refreshPoll(); // Refresh des résultats
     } catch (err) {
         voteError.value = err?.data?.message ?? "Erreur lors du vote.";
     } finally {
-        voting.value = false;
+        voting.value = false; // On arrête l'envoi dans tous les cas.
     }
 }
 
@@ -84,13 +97,14 @@ async function refreshPoll() {
 
 onMounted(async () => {
     try {
-        currentUser.value = await fetchApiBase({ url: 'user' });
+        currentUser.value = await fetchApiBase({ url: "user" });
     } catch {
-        // Not logged in
+        // Not logged in, currentUser reste null
     }
 
     await refreshPoll();
 
+    // Si le user a déjà voté, on affiche ces choix précédent
     if (poll.value?.user_option_ids?.length) {
         selectedIds.value = poll.value.user_option_ids;
         voted.value = true;
@@ -102,49 +116,81 @@ usePolling(refreshPoll);
 
 <template>
     <div>
-        <p v-if="loading" class="text-slate-500 dark:text-slate-400">Chargement...</p>
+        <p v-if="loading" class="text-slate-500 dark:text-slate-400">
+            Chargement...
+        </p>
 
         <p v-else-if="error" class="text-red-500">{{ error }}</p>
 
         <div v-else-if="poll">
             <!-- En-tête -->
             <div class="flex items-center gap-3 mb-4">
-                <div class="h-10 w-10 rounded-full bg-teal-600 dark:bg-purple-900 flex items-center justify-center text-white font-semibold shrink-0">
-                    {{ poll.user.first_name[0].toUpperCase() }}{{ poll.user.last_name[0].toUpperCase() }}
+                <div
+                    class="h-10 w-10 rounded-full bg-teal-600 dark:bg-purple-900 flex items-center justify-center text-white font-semibold shrink-0"
+                >
+                    {{ poll.user.first_name[0].toUpperCase()
+                    }}{{ poll.user.last_name[0].toUpperCase() }}
                 </div>
                 <div>
                     <p class="font-semibold text-gray-900 dark:text-white">
                         {{ poll.user.first_name }} {{ poll.user.last_name }}
                     </p>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ new Date(poll.created_at).toLocaleDateString('fr-CH') }}
+                        {{
+                            new Date(poll.created_at).toLocaleDateString(
+                                "fr-CH",
+                            )
+                        }}
                     </p>
                 </div>
             </div>
 
-            <h1 v-if="poll.title" class="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+            <h1
+                v-if="poll.title"
+                class="text-2xl font-bold text-slate-900 dark:text-white mb-1"
+            >
                 {{ poll.title }}
             </h1>
-            <p class="text-lg text-slate-700 dark:text-slate-300 font-medium mb-6">
+            <p
+                class="text-lg text-slate-700 dark:text-slate-300 font-medium mb-6"
+            >
                 {{ poll.question }}
             </p>
 
             <!-- Sondage expiré -->
-            <div v-if="isExpired" class="mb-6 flex items-center gap-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-4 py-3 text-red-700 dark:text-red-400">
+            <div
+                v-if="isExpired"
+                class="mb-6 flex items-center gap-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-4 py-3 text-red-700 dark:text-red-400"
+            >
                 <span class="text-lg leading-none">⛔</span>
                 <div>
                     <p class="font-medium">Ce sondage est terminé</p>
                     <p class="text-sm">
-                        La période de vote s'est terminée le {{ new Date(poll.ends_at).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }}.
+                        La période de vote s'est terminée le
+                        {{
+                            new Date(poll.ends_at).toLocaleDateString("fr-CH", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                            })
+                        }}.
                     </p>
                 </div>
             </div>
 
             <!-- Confirmation de vote -->
-            <p v-if="voted && !poll.allow_vote_change && !isExpired" class="mb-4 text-sm font-medium text-teal-600 dark:text-teal-400">
+            <p
+                v-if="voted && !poll.allow_vote_change && !isExpired"
+                class="mb-4 text-sm font-medium text-teal-600 dark:text-teal-400"
+            >
                 Vote enregistré.
             </p>
-            <p v-if="voted && poll.allow_vote_change" class="mb-2 text-sm text-slate-400 dark:text-slate-500">
+            <p
+                v-if="voted && poll.allow_vote_change"
+                class="mb-2 text-sm text-slate-400 dark:text-slate-500"
+            >
                 Vous avez déjà voté — vous pouvez modifier votre choix.
             </p>
 
@@ -160,27 +206,48 @@ usePolling(refreshPoll);
                         selectedIds.includes(option.id)
                             ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
                             : canVote
-                                ? 'border-slate-200 dark:border-slate-600 hover:border-teal-400 dark:hover:border-teal-500 bg-white dark:bg-slate-800'
-                                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800',
+                              ? 'border-slate-200 dark:border-slate-600 hover:border-teal-400 dark:hover:border-teal-500 bg-white dark:bg-slate-800'
+                              : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800',
                     ]"
                 >
                     <div class="flex items-center justify-between mb-1">
-                        <div class="flex items-center gap-2 text-slate-900 dark:text-white text-sm font-medium">
+                        <div
+                            class="flex items-center gap-2 text-slate-900 dark:text-white text-sm font-medium"
+                        >
                             <span v-if="canVote">
-                                {{ poll.allow_multiple_choices
-                                    ? (selectedIds.includes(option.id) ? '☑' : '☐')
-                                    : (selectedIds.includes(option.id) ? '◉' : '○') }}
+                                {{
+                                    poll.allow_multiple_choices
+                                        ? selectedIds.includes(option.id)
+                                            ? "☑"
+                                            : "☐"
+                                        : selectedIds.includes(option.id)
+                                          ? "◉"
+                                          : "○"
+                                }}
                             </span>
-                            <span v-else-if="voted && selectedIds.includes(option.id)">
-                                {{ poll.allow_multiple_choices ? '☑' : '◉' }}
+                            <span
+                                v-else-if="
+                                    voted && selectedIds.includes(option.id)
+                                "
+                            >
+                                {{ poll.allow_multiple_choices ? "☑" : "◉" }}
                             </span>
                             {{ option.label }}
                         </div>
-                        <span v-if="canSeeResults" class="text-xs text-slate-500 dark:text-slate-400">
-                            {{ option.votes_count ?? 0 }} vote{{ (option.votes_count ?? 0) !== 1 ? 's' : '' }} ({{ pct(option) }}%)
+                        <span
+                            v-if="canSeeResults"
+                            class="text-xs text-slate-500 dark:text-slate-400"
+                        >
+                            {{ option.votes_count ?? 0 }} vote{{
+                                (option.votes_count ?? 0) !== 1 ? "s" : ""
+                            }}
+                            ({{ pct(option) }}%)
                         </span>
                     </div>
-                    <div v-if="canSeeResults" class="h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                    <div
+                        v-if="canSeeResults"
+                        class="h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden"
+                    >
                         <div
                             class="h-full rounded-full bg-teal-500 dark:bg-teal-600 transition-all"
                             :style="{ width: pct(option) + '%' }"
@@ -190,13 +257,24 @@ usePolling(refreshPoll);
             </ul>
 
             <!-- Actions -->
-            <p v-if="isExpired" class="text-sm text-slate-400 dark:text-slate-500 italic">
+            <p
+                v-if="isExpired"
+                class="text-sm text-slate-400 dark:text-slate-500 italic"
+            >
                 Les votes sont clôturés.
             </p>
             <div v-if="!isExpired">
                 <!-- Non connecté -->
-                <p v-if="!currentUser" class="text-sm text-slate-400 dark:text-slate-500 italic">
-                    <a href="/auth/login" class="underline text-teal-600 hover:text-teal-500">Connectez-vous</a> pour voter.
+                <p
+                    v-if="!currentUser"
+                    class="text-sm text-slate-400 dark:text-slate-500 italic"
+                >
+                    <a
+                        href="/auth/login"
+                        class="underline text-teal-600 hover:text-teal-500"
+                        >Connectez-vous</a
+                    >
+                    pour voter.
                 </p>
 
                 <!-- Voté sans possibilité de modifier -->
@@ -206,25 +284,41 @@ usePolling(refreshPoll);
 
                 <!-- Peut voter ou modifier -->
                 <div v-else>
-                    <p v-if="voteError" class="text-sm text-red-500 mb-2">{{ voteError }}</p>
+                    <p v-if="voteError" class="text-sm text-red-500 mb-2">
+                        {{ voteError }}
+                    </p>
                     <button
                         @click="submitVote"
                         :disabled="!selectedIds.length || voting"
                         class="px-5 py-2 rounded-md text-sm font-medium transition"
-                        :class="selectedIds.length && !voting
-                            ? 'bg-teal-600 hover:bg-teal-500 text-white'
-                            : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'"
+                        :class="
+                            selectedIds.length && !voting
+                                ? 'bg-teal-600 hover:bg-teal-500 text-white'
+                                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                        "
                     >
-                        {{ voting ? 'Envoi...' : voted ? 'Modifier mon vote' : 'Voter' }}
+                        {{
+                            voting
+                                ? "Envoi..."
+                                : voted
+                                  ? "Modifier mon vote"
+                                  : "Voter"
+                        }}
                     </button>
                 </div>
             </div>
 
             <!-- Total -->
-            <p class="mt-4 text-xs text-slate-400 dark:text-slate-500">{{ totalVotes }} vote{{ totalVotes !== 1 ? 's' : '' }} au total</p>
+            <p class="mt-4 text-xs text-slate-400 dark:text-slate-500">
+                {{ totalVotes }} vote{{ totalVotes !== 1 ? "s" : "" }} au total
+            </p>
 
             <!-- Lien retour -->
-            <a href="/polls" class="inline-block mt-6 text-sm text-teal-600 hover:underline">← Retour aux sondages</a>
+            <a
+                href="/polls"
+                class="inline-block mt-6 text-sm text-teal-600 hover:underline"
+                >← Retour aux sondages</a
+            >
         </div>
     </div>
 </template>

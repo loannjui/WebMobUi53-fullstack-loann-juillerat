@@ -10,15 +10,18 @@ const polls = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
+// Enregistre la data, la ref d'erreur, et une fonction pour lancer et relancer la requête
 const { data, error: fetchError, fetchNow } = fetchApiToRef({ url: "polls" });
 
-watch(data, (val) => {
+// Dès que data reçoit une valeur... 
+watch(data, (val) => { // On envoie la nouvelle valeur de data en callback
     if (val) {
-        polls.value = val;
-        loading.value = false;
+        polls.value = val; // On copie les sondages dans polls
+        loading.value = false; // On coupe le chargement
     }
 });
 
+// On surveille si des erreurs surviennent et on arrête le chargement
 watch(fetchError, (err) => {
     if (err) {
         error.value = "Impossible de charger les sondages.";
@@ -26,6 +29,7 @@ watch(fetchError, (err) => {
     }
 });
 
+// Refresh automatique toutes les 5 secondes
 usePolling(fetchNow);
 </script>
 

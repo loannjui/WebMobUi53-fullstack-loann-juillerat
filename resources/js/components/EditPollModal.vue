@@ -27,7 +27,8 @@ const options = ref(["", ""]);
 
 // Quand le sondage change (ou à l'ouverture), on remplit tous les champs avec ses données
 watch(
-    () => props.poll,
+    () => props.poll, // Ce qu'on surveille
+    // Callback quand la valeur change
     (p) => {
         if (!p) return;
         title.value = p.title ?? "";
@@ -43,7 +44,7 @@ watch(
             ? p.options.map((o) => o.label)
             : ["", ""];
     },
-    { immediate: true }
+    { immediate: true },
 );
 
 // Ajoute un champ vide à la fin de la liste d'options
@@ -55,26 +56,28 @@ function addOption() {
 function removeOption(index) {
     options.value.splice(index, 1);
 }
-
+// Envoie le prop à la modale parent pour la fermer.
 function close() {
     emit("update:modelValue", false);
 }
 
 async function submit() {
+    // Si le sondage n'est pas un brouillon, on empêche la modif.
     if (!props.poll?.is_draft) return;
-
+    // Vide les messages d'erreur
     durationError.value = "";
     optionsError.value = "";
     if (!duration.value || duration.value < 1) {
         durationError.value = "La durée doit être d'au moins 1 jour.";
         return;
     }
-    const filledOptions = options.value.filter((o) => o.trim() !== "");
+    const filledOptions = options.value.filter((o) => o.trim() !== ""); // Enlève les espaces au début et à la fin des string
     if (filledOptions.length < 2) {
         optionsError.value = "Veuillez saisir au moins 2 options de réponse.";
         return;
     }
     try {
+        // Va faire la requête HTTP. Laravel reçoit la requête et appelle la méthode update du controller.
         const result = await fetchApi({
             url: "polls/" + props.poll.id,
             method: "PUT",
@@ -89,7 +92,7 @@ async function submit() {
                 options: filledOptions,
             },
         });
-        updatePoll(result);
+        updatePoll(result); // Stock la nouvelle donnée dans le store
         close();
     } catch (err) {
         console.error(err);
@@ -99,6 +102,7 @@ async function submit() {
 
 <template>
     <Teleport to="body">
+        <!-- On vérifie si un sondage existe bel et bien -->
         <div
             v-if="modelValue && poll"
             class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
@@ -117,14 +121,23 @@ async function submit() {
                     </h2>
                 </div>
                 <div class="px-6 py-4">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="title">Titre du sondage</label>
+                    <label
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                        for="title"
+                        >Titre du sondage</label
+                    >
                     <input
                         v-model="title"
                         type="text"
                         placeholder="Titre du sondage"
                         class="mb-4 w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600"
                     />
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="question">Votre question <span class="text-red-500">*</span></label>
+                    <label
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                        for="question"
+                        >Votre question
+                        <span class="text-red-500">*</span></label
+                    >
                     <input
                         v-model="question"
                         type="text"
@@ -133,30 +146,59 @@ async function submit() {
                     />
                     <div class="mb-4">
                         <div class="flex items-center mb-2">
-                            <input v-model="is_published" class="mr-2" type="checkbox" />
-                            <label class="text-sm text-gray-700 dark:text-gray-300">Publier</label>
+                            <input
+                                v-model="is_published"
+                                class="mr-2"
+                                type="checkbox"
+                            />
+                            <label
+                                class="text-sm text-gray-700 dark:text-gray-300"
+                                >Publier</label
+                            >
                         </div>
                         <div class="flex items-center mb-2">
-                            <input class ="mr-2" v-model="multiple_choice" type="checkbox" />
-                            <label class="text-sm text-gray-700 dark:text-gray-300" for="multiple_choice">Choix multiple</label>
+                            <input
+                                class="mr-2"
+                                v-model="multiple_choice"
+                                type="checkbox"
+                            />
+                            <label
+                                class="text-sm text-gray-700 dark:text-gray-300"
+                                for="multiple_choice"
+                                >Choix multiple</label
+                            >
                         </div>
                         <div class="flex items-center mb-2">
-                            <input class="mr-2"
+                            <input
+                                class="mr-2"
                                 v-model="allow_vote_change"
                                 type="checkbox"
                             />
-                            <label class="text-sm text-gray-700 dark:text-gray-300" for="allow_vote_change"
+                            <label
+                                class="text-sm text-gray-700 dark:text-gray-300"
+                                for="allow_vote_change"
                                 >Changement de votes</label
                             >
                         </div>
                         <div class="flex items-center mb-2">
-                            <input class="mr-2" v-model="results_public" type="checkbox" />
-                            <label class="text-sm text-gray-700 dark:text-gray-300" for="results_public"
+                            <input
+                                class="mr-2"
+                                v-model="results_public"
+                                type="checkbox"
+                            />
+                            <label
+                                class="text-sm text-gray-700 dark:text-gray-300"
+                                for="results_public"
                                 >Résultats publics</label
                             >
                         </div>
                     </div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="duration">Durée du sondage (en jours) <span class="text-red-500">*</span></label>
+                    <label
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                        for="duration"
+                        >Durée du sondage (en jours)
+                        <span class="text-red-500">*</span></label
+                    >
                     <input
                         v-model="duration"
                         type="number"
@@ -164,11 +206,21 @@ async function submit() {
                         min="1"
                         max="30"
                         class="w-full px-3 py-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-teal-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                        :class="durationError ? 'border-red-400 dark:border-red-600 mb-1' : 'border-slate-300 dark:border-slate-600 mb-4'"
+                        :class="
+                            durationError
+                                ? 'border-red-400 dark:border-red-600 mb-1'
+                                : 'border-slate-300 dark:border-slate-600 mb-4'
+                        "
                     />
-                    <p v-if="durationError" class="mb-4 text-xs text-red-500">{{ durationError }}</p>
+                    <p v-if="durationError" class="mb-4 text-xs text-red-500">
+                        {{ durationError }}
+                    </p>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Options de réponse <span class="text-red-500">*</span></label>
+                        <label
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                            >Options de réponse
+                            <span class="text-red-500">*</span></label
+                        >
                         <div
                             v-for="(option, index) in options"
                             :key="index"
@@ -185,14 +237,23 @@ async function submit() {
                                 @click="removeOption(index)"
                                 type="button"
                                 class="px-2 py-1 rounded-md text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
-                            >✕</button>
+                            >
+                                ✕
+                            </button>
                         </div>
-                        <p v-if="optionsError" class="mb-2 text-xs text-red-500">{{ optionsError }}</p>
+                        <p
+                            v-if="optionsError"
+                            class="mb-2 text-xs text-red-500"
+                        >
+                            {{ optionsError }}
+                        </p>
                         <button
                             @click="addOption"
                             type="button"
                             class="text-sm text-teal-600 hover:underline"
-                        >+ Ajouter une option</button>
+                        >
+                            + Ajouter une option
+                        </button>
                     </div>
                 </div>
                 <div

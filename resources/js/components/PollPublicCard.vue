@@ -1,30 +1,35 @@
 <script setup>
 import { computed } from "vue";
 
+// L'enfant reçoit un poll de son parent.
 const props = defineProps({
     poll: { type: Object, required: true },
 });
 
+// Si votes_count d'une option d'un sondage change, totalVotes sera recalculé automatiquement
 const totalVotes = computed(() =>
-    (props.poll.options ?? []).reduce((sum, o) => sum + (o.votes_count ?? 0), 0)
+    (props.poll.options ?? []).reduce((sum, o) => sum + (o.votes_count ?? 0), 0) // évite de lpanter s'il n'y a pas d'options
 );
 
+// 
 function pct(option) {
-    if (!totalVotes.value) return 0;
-    return Math.round(((option.votes_count ?? 0) / totalVotes.value) * 100);
+    if (!totalVotes.value) return 0; // S'il n'y a aucun vote on retourne 0 directement.
+    return Math.round(((option.votes_count ?? 0) / totalVotes.value) * 100); // On calcule le pourcentage en comparant aux votes totaux
 }
 
 const remaining = computed(() => {
     if (!props.poll.ends_at) return null;
-    const diff = new Date(props.poll.ends_at) - Date.now();
+    const diff = new Date(props.poll.ends_at) - Date.now(); // Donne l'écart en milisecondes
     if (diff <= 0) return null;
     const days = Math.floor(diff / 86400000);
-    const hours = Math.floor((diff % 86400000) / 3600000);
-    const minutes = Math.floor((diff % 3600000) / 60000);
+    const hours = Math.floor((diff % 86400000) / 3600000); // Retire les jours entiers puis calcule en heure.
+    const minutes = Math.floor((diff % 3600000) / 60000); // Retire les heures entières pour calculer les minutes
+    // On crée un tableau avec les différentes valeurs.
     const parts = [];
     if (days > 0) parts.push(`${days}j`);
     if (hours > 0) parts.push(`${hours}h`);
     parts.push(`${minutes}min`);
+    // Puis on le change en string
     return parts.join(' ');
 });
 </script>
